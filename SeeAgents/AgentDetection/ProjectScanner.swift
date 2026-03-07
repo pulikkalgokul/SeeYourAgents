@@ -62,8 +62,6 @@ final class ProjectScanner: @unchecked Sendable {
         // Step 1: Find all running claude processes and their project dirs
         let processes = findClaudeProcesses()
         let activeProjectDirs = Set(processes.map(\.projectDir))
-        let processCount = processes.count
-
         // Step 2: For each active project dir, find N most recent JSONL files
         // where N = number of claude processes in that directory
         let fm = FileManager.default
@@ -101,10 +99,8 @@ final class ProjectScanner: @unchecked Sendable {
                     logger.info("Found active session: \(jsonlPath)")
 
                     let callback = onSessionFound
-                    let dir = projectDir
-                    let path = jsonlPath
                     DispatchQueue.main.async {
-                        callback(dir, path)
+                        callback(projectDir, jsonlPath)
                     }
                 }
             }
@@ -117,9 +113,8 @@ final class ProjectScanner: @unchecked Sendable {
             logger.info("Session lost (process gone): \(lostFile)")
 
             let callback = onSessionLost
-            let path = lostFile
             DispatchQueue.main.async {
-                callback(path)
+                callback(lostFile)
             }
         }
     }

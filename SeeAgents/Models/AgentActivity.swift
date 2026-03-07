@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 /// Runtime state for a single detected Claude Code agent session.
 @Observable
@@ -62,4 +63,12 @@ enum AgentStatus: String {
     case active
     case waiting
     case permission
+
+    var color: Color {
+        switch self {
+        case .active: .green
+        case .waiting: .blue
+        case .permission: .orange
+        }
+    }
 }

@@ -22,7 +22,6 @@ final class AgentWatcher: @unchecked Sendable {
 
     struct FileReadResult: Sendable {
         let lines: [String]
-        let hasActivity: Bool
     }
 
     init(
@@ -41,7 +40,7 @@ final class AgentWatcher: @unchecked Sendable {
     func start() {
         guard !isStopped else { return }
         startDispatchSource()
-        startPollingTimer()
+//        startPollingTimer()
         readNewLines()
     }
 
@@ -126,11 +125,10 @@ final class AgentWatcher: @unchecked Sendable {
         lineBuffer = splitLines.removeLast()
 
         let completeLines = splitLines.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
-        let hasActivity = !completeLines.isEmpty
 
-        guard hasActivity else { return }
+        guard !completeLines.isEmpty else { return }
 
-        let result = FileReadResult(lines: completeLines, hasActivity: hasActivity)
+        let result = FileReadResult(lines: completeLines)
         let callback = onNewLines
         DispatchQueue.main.async {
             callback(result)

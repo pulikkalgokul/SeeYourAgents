@@ -178,11 +178,7 @@ enum TranscriptParser {
         timerManager.cancelPermissionTimer(for: agent.id)
 
         // Clear all stale tool state
-        agent.activeToolIds.removeAll()
-        agent.activeToolStatuses.removeAll()
-        agent.activeToolNames.removeAll()
-        agent.activeSubagentToolIds.removeAll()
-        agent.activeSubagentToolNames.removeAll()
+        clearToolState(agent: agent)
 
         agent.isWaiting = true
         agent.permissionSent = false
@@ -243,12 +239,16 @@ enum TranscriptParser {
 
     // MARK: - Helpers
 
-    static func clearActivity(agent: AgentActivity, timerManager: TimerManager) {
+    private static func clearToolState(agent: AgentActivity) {
         agent.activeToolIds.removeAll()
         agent.activeToolStatuses.removeAll()
         agent.activeToolNames.removeAll()
         agent.activeSubagentToolIds.removeAll()
         agent.activeSubagentToolNames.removeAll()
+    }
+
+    static func clearActivity(agent: AgentActivity, timerManager: TimerManager) {
+        clearToolState(agent: agent)
         agent.isWaiting = false
         agent.permissionSent = false
         timerManager.cancelPermissionTimer(for: agent.id)

@@ -67,14 +67,12 @@ final class AgentManager {
 
             agent.lastDataReceived = Date()
 
-            if result.hasActivity {
-                self.timerManager.cancelWaitingTimer(for: agent.id)
-                self.timerManager.cancelPermissionTimer(for: agent.id)
+            self.timerManager.cancelWaitingTimer(for: agent.id)
+            self.timerManager.cancelPermissionTimer(for: agent.id)
 
-                if agent.permissionSent {
-                    agent.permissionSent = false
-                    agent.status = .active
-                }
+            if agent.permissionSent {
+                agent.permissionSent = false
+                agent.status = .active
             }
 
             for line in result.lines {

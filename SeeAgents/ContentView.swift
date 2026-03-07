@@ -55,19 +55,11 @@ struct AgentRow: View {
                 if let toolStatus = agent.currentToolStatus {
                     Text(toolStatus)
                         .font(.caption2)
-                        .foregroundStyle(statusColor(for: agent.status))
+                        .foregroundStyle(agent.status.color)
                 }
             }
         }
         .padding(.vertical, 4)
-    }
-
-    private func statusColor(for status: AgentStatus) -> Color {
-        switch status {
-        case .active: .green
-        case .waiting: .blue
-        case .permission: .orange
-        }
     }
 }
 
@@ -78,16 +70,8 @@ struct StatusIndicator: View {
 
     var body: some View {
         Circle()
-            .fill(color)
+            .fill(status.color)
             .frame(width: 10, height: 10)
-    }
-
-    private var color: Color {
-        switch status {
-        case .active: .green
-        case .waiting: .blue
-        case .permission: .orange
-        }
     }
 }
 
@@ -108,7 +92,7 @@ struct AgentDetailView: View {
                     .font(.callout)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(statusBackground)
+                    .background(agent.status.color.opacity(0.2))
                     .clipShape(Capsule())
             }
 
@@ -173,14 +157,6 @@ struct AgentDetailView: View {
         }
         .padding()
         .navigationTitle("Agent #\(agent.id)")
-    }
-
-    private var statusBackground: Color {
-        switch agent.status {
-        case .active: .green.opacity(0.2)
-        case .waiting: .blue.opacity(0.2)
-        case .permission: .orange.opacity(0.2)
-        }
     }
 
     private func toolIcon(for toolName: String?) -> String {
