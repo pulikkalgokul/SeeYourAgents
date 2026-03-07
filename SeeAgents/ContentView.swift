@@ -3,35 +3,53 @@ import SwiftUI
 struct ContentView: View {
     var agentManager: AgentManager
     @State private var selectedAgentId: Int?
+    @State private var showDebugView = false
 
     var body: some View {
-        NavigationSplitView {
-            List(selection: $selectedAgentId) {
-                if agentManager.sortedAgents.isEmpty {
-                    ContentUnavailableView {
-                        Label("No Agents Detected", systemImage: "person.crop.circle.badge.questionmark")
-                    } description: {
-                        Text("Start a Claude Code session in your terminal and it will appear here automatically.")
+        Group {
+            if showDebugView {
+                NavigationSplitView {
+                    List(selection: $selectedAgentId) {
+                        if agentManager.sortedAgents.isEmpty {
+                            ContentUnavailableView {
+                                Label("No Agents Detected", systemImage: "person.crop.circle.badge.questionmark")
+                            } description: {
+                                Text("Start a Claude Code session in your terminal and it will appear here automatically.")
+                            }
+                        } else {
+                            ForEach(agentManager.sortedAgents) { agent in
+                                AgentRow(agent: agent)
+                                    .tag(agent.id)
+                            }
+                        }
                     }
-                } else {
-                    ForEach(agentManager.sortedAgents) { agent in
-                        AgentRow(agent: agent)
-                            .tag(agent.id)
+                    .navigationTitle("SeeAgents")
+                } detail: {
+                    if let id = selectedAgentId, let agent = agentManager.agents[id] {
+                        AgentDetailView(agent: agent)
+                    } else {
+                        ContentUnavailableView(
+                            "Select an Agent",
+                            systemImage: "person.crop.circle"
+                        )
                     }
                 }
-            }
-            .navigationTitle("SeeAgents")
-        } detail: {
-            if let id = selectedAgentId, let agent = agentManager.agents[id] {
-                AgentDetailView(agent: agent)
             } else {
-                ContentUnavailableView(
-                    "Select an Agent",
-                    systemImage: "person.crop.circle"
-                )
+                OfficeView()
             }
         }
         .frame(minWidth: 600, minHeight: 400)
+        .toolbar {
+            ToolbarItem(placement: .automatic) {
+                Button {
+                    showDebugView.toggle()
+                } label: {
+                    Image(systemName: showDebugView ? "building.2" : "ladybug")
+                    Text(showDebugView ? "Office" : "Debug")
+                }
+                .keyboardShortcut("d", modifiers: .command)
+            }
+        }
     }
 }
 
