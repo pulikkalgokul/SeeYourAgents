@@ -35,7 +35,7 @@ struct ContentView: View {
                     }
                 }
             } else {
-                OfficeView()
+                OfficeView(agentManager: agentManager)
             }
         }
         .frame(minWidth: 600, minHeight: 400)
