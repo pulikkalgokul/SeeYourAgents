@@ -3,8 +3,7 @@ import os
 
 private let logger = Logger(subsystem: "com.personal.SeeAgents", category: "AgentManager")
 
-/// Orchestrates agent detection: scans for JSONL files and manages per-agent watchers.
-/// Ported from pixel-agents `agentManager.ts`.
+/// Orchestrates agent detection: finds running claude processes and watches their JSONL files.
 @Observable
 final class AgentManager {
     private(set) var agents: [Int: AgentActivity] = [:]
@@ -24,13 +23,18 @@ final class AgentManager {
     func startScanning() {
         guard scanner == nil else { return }
 
-        logger.info("Starting project scanner at \(GameConstants.claudeProjectsPath)")
+        logger.info("Starting process-based scanner")
 
-        let scanner = ProjectScanner { [weak self] projectDir, jsonlPath in
-            guard let self else { return }
-            logger.info("Scanner found session: \(jsonlPath)")
-            self.addAgent(projectDir: projectDir, jsonlFile: jsonlPath)
-        }
+        let scanner = ProjectScanner(
+            onSessionFound: { [weak self] projectDir, jsonlPath in
+                guard let self else { return }
+                self.addAgent(projectDir: projectDir, jsonlFile: jsonlPath)
+            },
+            onSessionLost: { [weak self] jsonlPath in
+                guard let self else { return }
+                self.removeAgentByFile(jsonlPath)
+            }
+        )
         self.scanner = scanner
         scanner.start()
     }
@@ -48,11 +52,7 @@ final class AgentManager {
     // MARK: - Agent Management
 
     private func addAgent(projectDir: String, jsonlFile: String) {
-        // Don't add duplicates
-        guard !agents.values.contains(where: { $0.jsonlFile == jsonlFile }) else {
-            logger.debug("Skipping duplicate: \(jsonlFile)")
-            return
-        }
+        guard !agents.values.contains(where: { $0.jsonlFile == jsonlFile }) else { return }
 
         let id = nextAgentId
         nextAgentId += 1
@@ -64,6 +64,8 @@ final class AgentManager {
 
         let watcher = AgentWatcher(agent: agent) { [weak self] result in
             guard let self, let agent = self.agents[id] else { return }
+
+            agent.lastDataReceived = Date()
 
             if result.hasActivity {
                 self.timerManager.cancelWaitingTimer(for: agent.id)
@@ -80,7 +82,7 @@ final class AgentManager {
             }
         }
         watchers[id] = watcher
-        scanner?.markTracked(jsonlFile)
+        scanner?.markReported(jsonlFile)
         watcher.start()
     }
 
@@ -89,6 +91,12 @@ final class AgentManager {
         watchers.removeValue(forKey: agentId)
         timerManager.cancelAll(for: agentId)
         agents.removeValue(forKey: agentId)
+        logger.info("Removed agent #\(agentId)")
     }
 
+    /// Remove agent by its JSONL file path (called when process dies).
+    private func removeAgentByFile(_ jsonlPath: String) {
+        guard let (id, _) = agents.first(where: { $0.value.jsonlFile == jsonlPath }) else { return }
+        removeAgent(id)
+    }
 }

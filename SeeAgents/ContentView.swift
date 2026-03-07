@@ -2,10 +2,11 @@ import SwiftUI
 
 struct ContentView: View {
     var agentManager: AgentManager
+    @State private var selectedAgentId: Int?
 
     var body: some View {
         NavigationSplitView {
-            List {
+            List(selection: $selectedAgentId) {
                 if agentManager.sortedAgents.isEmpty {
                     ContentUnavailableView {
                         Label("No Agents Detected", systemImage: "person.crop.circle.badge.questionmark")
@@ -14,23 +15,20 @@ struct ContentView: View {
                     }
                 } else {
                     ForEach(agentManager.sortedAgents) { agent in
-                        NavigationLink(value: agent.id) {
-                            AgentRow(agent: agent)
-                        }
+                        AgentRow(agent: agent)
+                            .tag(agent.id)
                     }
                 }
             }
             .navigationTitle("SeeAgents")
         } detail: {
-            NavigationStack {
-                if let selectedAgent = agentManager.sortedAgents.first {
-                    AgentDetailView(agent: selectedAgent)
-                } else {
-                    ContentUnavailableView(
-                        "Select an Agent",
-                        systemImage: "person.crop.circle"
-                    )
-                }
+            if let id = selectedAgentId, let agent = agentManager.agents[id] {
+                AgentDetailView(agent: agent)
+            } else {
+                ContentUnavailableView(
+                    "Select an Agent",
+                    systemImage: "person.crop.circle"
+                )
             }
         }
         .frame(minWidth: 600, minHeight: 400)

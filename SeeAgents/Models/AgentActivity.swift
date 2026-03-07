@@ -22,10 +22,14 @@ final class AgentActivity: Identifiable {
     var hadToolsInTurn: Bool = false
     var status: AgentStatus = .active
 
+    /// Timestamp of last received data from the watcher.
+    var lastDataReceived: Date
+
     init(id: Int, projectDir: String, jsonlFile: String) {
         self.id = id
         self.projectDir = projectDir
         self.jsonlFile = jsonlFile
+        self.lastDataReceived = Date()
     }
 
     /// Human-readable summary of current activity.
