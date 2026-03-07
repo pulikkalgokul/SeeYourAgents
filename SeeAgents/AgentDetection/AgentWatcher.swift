@@ -40,7 +40,7 @@ final class AgentWatcher: @unchecked Sendable {
     func start() {
         guard !isStopped else { return }
         startDispatchSource()
-//        startPollingTimer()
+        startPollingTimer()
         readNewLines()
     }
 

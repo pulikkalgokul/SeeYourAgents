@@ -52,6 +52,7 @@ final class AgentManager {
     // MARK: - Agent Management
 
     private func addAgent(projectDir: String, jsonlFile: String) {
+        // Already tracking this exact file
         guard !agents.values.contains(where: { $0.jsonlFile == jsonlFile }) else { return }
 
         let id = nextAgentId
@@ -62,7 +63,15 @@ final class AgentManager {
 
         logger.info("Added agent #\(id) for \(jsonlFile)")
 
-        let watcher = AgentWatcher(agent: agent) { [weak self] result in
+        let watcher = makeWatcher(for: agent)
+        watchers[id] = watcher
+        scanner?.markReported(jsonlFile)
+        watcher.start()
+    }
+
+    private func makeWatcher(for agent: AgentActivity) -> AgentWatcher {
+        let id = agent.id
+        return AgentWatcher(agent: agent) { [weak self] result in
             guard let self, let agent = self.agents[id] else { return }
 
             agent.lastDataReceived = Date()
@@ -79,9 +88,6 @@ final class AgentManager {
                 TranscriptParser.processLine(line, agent: agent, timerManager: self.timerManager)
             }
         }
-        watchers[id] = watcher
-        scanner?.markReported(jsonlFile)
-        watcher.start()
     }
 
     func removeAgent(_ agentId: Int) {
