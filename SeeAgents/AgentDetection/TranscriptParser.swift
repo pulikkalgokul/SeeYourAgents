@@ -115,7 +115,8 @@ enum TranscriptParser {
                 timerManager.startPermissionTimer(for: agent)
             }
         } else if !agent.hadToolsInTurn {
-            // Text-only turn — start idle timer
+            // Text-only turn — agent is thinking/generating
+            agent.status = .thinking
             timerManager.startWaitingTimer(
                 for: agent,
                 delay: GameConstants.textIdleDelay
@@ -150,19 +151,22 @@ enum TranscriptParser {
 
                 if agent.activeToolIds.isEmpty {
                     agent.hadToolsInTurn = false
+                    agent.status = .thinking
                 }
             } else {
-                // New text prompt — reset
+                // New text prompt — agent will start thinking
                 timerManager.cancelWaitingTimer(for: agent.id)
                 clearActivity(agent: agent, timerManager: timerManager)
                 agent.hadToolsInTurn = false
+                agent.status = .thinking
             }
 
         case .string:
-            // New text prompt
+            // New text prompt — agent will start thinking
             timerManager.cancelWaitingTimer(for: agent.id)
             clearActivity(agent: agent, timerManager: timerManager)
             agent.hadToolsInTurn = false
+            agent.status = .thinking
         }
     }
 

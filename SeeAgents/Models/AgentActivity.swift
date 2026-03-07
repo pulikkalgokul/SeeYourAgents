@@ -37,6 +37,7 @@ final class AgentActivity: Identifiable {
     var currentToolStatus: String? {
         if isWaiting { return "Waiting for input" }
         if permissionSent { return "Needs permission" }
+        if status == .thinking { return "Thinking..." }
         if let firstToolId = activeToolIds.first,
            let status = activeToolStatuses[firstToolId] {
             return status
@@ -61,12 +62,14 @@ final class AgentActivity: Identifiable {
 
 enum AgentStatus: String {
     case active
+    case thinking
     case waiting
     case permission
 
     var color: Color {
         switch self {
         case .active: .green
+        case .thinking: .purple
         case .waiting: .blue
         case .permission: .orange
         }
