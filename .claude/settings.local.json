@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(file:*)",
+      "Bash(grep:*)",
+      "Bash(identify /Users/g.pulikkal/Desktop/PersonalProjects/SeeAgents/SeeAgents/SeeAgents/Resources/walls.png)",
+      "Bash(python3 -c \"from PIL import Image; img = Image.open\\(''/Users/g.pulikkal/Desktop/PersonalProjects/SeeAgents/SeeAgents/SeeAgents/Resources/walls.png''\\); print\\(f''Size: {img.size}''\\)\")",
+      "Read(//Users/g.pulikkal/Desktop/PersonalProjects/SeeAgents/SeeAgents/**)",
+      "Bash(sips:*)"
+    ]
+  }
+}

@@ -20,13 +20,48 @@ final class AssetLoader {
 
     private init() {}
 
+    private var atlasSheetImages: [String: CGImage] = [:]
+
     func loadAllAssets() {
         guard !isLoaded else { return }
+        loadAtlasManifest()
         loadWallSprites()
         loadFloorSprites()
         loadFurnitureSprites()
+        atlasSheetImages.removeAll()
         isLoaded = true
         print("[AssetLoader] Assets loaded: \(wallTextures.count) walls, \(floorTextures.count) floors, \(furnitureTextures.count) furniture")
+    }
+
+    // MARK: - Atlas
+
+    private var atlasManifest: SpriteAtlasManifest?
+
+    private func loadAtlasManifest() {
+        guard let url = Bundle.main.url(forResource: "lrk-sprite-atlas", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let manifest = try? JSONDecoder().decode(SpriteAtlasManifest.self, from: data) else {
+            print("[AssetLoader] lrk-sprite-atlas.json not found")
+            return
+        }
+        atlasManifest = manifest
+
+        for (key, sheetDef) in manifest.sheets {
+            if let sheetURL = Bundle.main.url(forResource: sheetDef.file, withExtension: "png"),
+               let nsImage = NSImage(contentsOf: sheetURL),
+               let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) {
+                atlasSheetImages[key] = cgImage
+            } else {
+                print("[AssetLoader] Sheet not found: \(sheetDef.file).png")
+            }
+        }
+        print("[AssetLoader] Atlas loaded: \(atlasSheetImages.count) sheets")
+    }
+
+    private func cropSprite(region: SpriteRegion) -> CGImage? {
+        guard let sheet = atlasSheetImages[region.sheet] else { return nil }
+        let rect = CGRect(x: region.x, y: region.y, width: region.w, height: region.h)
+        return sheet.cropping(to: rect)
     }
 
     // MARK: - Wall sprites
@@ -60,7 +95,21 @@ final class AssetLoader {
     // MARK: - Floor sprites
 
     private func loadFloorSprites() {
-        if let url = Bundle.main.url(forResource: "floors", withExtension: "png"),
+        // Try atlas floors first
+        if let manifest = atlasManifest {
+            for region in manifest.floors {
+                if let cropped = cropSprite(region: region) {
+                    floorImages.append(cropped)
+                    let texture = SKTexture(cgImage: cropped)
+                    texture.filteringMode = .nearest
+                    floorTextures.append(texture)
+                }
+            }
+        }
+
+        // Fallback: try floors.png
+        if floorImages.isEmpty,
+           let url = Bundle.main.url(forResource: "floors", withExtension: "png"),
            let nsImage = NSImage(contentsOf: url),
            let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) {
             let tileSize = Int(OfficeConstants.tileSize)
@@ -77,7 +126,7 @@ final class AssetLoader {
             }
         }
 
-        // Fallback: generate solid gray tiles if no floors.png
+        // Fallback: generate solid gray tiles
         if floorImages.isEmpty {
             if let grayImage = createSolidColorImage(
                 width: Int(OfficeConstants.tileSize),
@@ -95,6 +144,19 @@ final class AssetLoader {
     // MARK: - Furniture sprites
 
     private func loadFurnitureSprites() {
+        // Load from atlas manifest
+        if let manifest = atlasManifest {
+            for (assetID, spriteName) in manifest.assetMapping {
+                guard let region = manifest.sprites[spriteName],
+                      let cropped = cropSprite(region: region) else { continue }
+                furnitureImages[assetID] = cropped
+                let texture = SKTexture(cgImage: cropped)
+                texture.filteringMode = .nearest
+                furnitureTextures[assetID] = texture
+            }
+        }
+
+        // Load individual PNGs for any remaining items (from furniture-catalog.json)
         guard let url = Bundle.main.url(forResource: "furniture-catalog", withExtension: "json"),
               let data = try? Data(contentsOf: url),
               let catalog = try? JSONDecoder().decode([FurnitureCatalogJSON].self, from: data) else {
@@ -102,6 +164,7 @@ final class AssetLoader {
         }
 
         for item in catalog {
+            guard furnitureTextures[item.id] == nil else { continue }
             if let pngURL = Bundle.main.url(forResource: item.id, withExtension: "png"),
                let nsImage = NSImage(contentsOf: pngURL),
                let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) {
