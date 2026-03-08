@@ -2797,6 +2797,18 @@
       "type": "ASSET_123",
       "col": 2,
       "row": 19
+    },
+    {
+      "uid": "pc1-bottom-left-row1-a",
+      "type": "PC1",
+      "col": 3,
+      "row": 14
+    },
+    {
+      "uid": "pc1-bottom-left-row1-b",
+      "type": "PC1",
+      "col": 8,
+      "row": 14
     }
   ]
 }

@@ -58,6 +58,7 @@ final class FurnitureCatalog {
             .init(type: "cooler", label: "Cooler", footprintW: 1, footprintH: 1, spriteWidth: 16, spriteHeight: 16, isDesk: false, category: "misc"),
             .init(type: "whiteboard", label: "Whiteboard", footprintW: 2, footprintH: 1, spriteWidth: 32, spriteHeight: 16, isDesk: false, category: "decor"),
             .init(type: "pc", label: "PC", footprintW: 1, footprintH: 1, spriteWidth: 16, spriteHeight: 16, isDesk: false, category: "electronics"),
+            .init(type: "PC1", label: "PC", footprintW: 1, footprintH: 1, spriteWidth: 16, spriteHeight: 16, isDesk: false, category: "electronics", canPlaceOnSurfaces: true),
             .init(type: "lamp", label: "Lamp", footprintW: 1, footprintH: 1, spriteWidth: 16, spriteHeight: 16, isDesk: false, category: "decor"),
             // Generated from tileset metadata (92 ASSET_* entries)
             .init(type: "ASSET_4", label: "Solid Wooden Counter", footprintW: 3, footprintH: 2, spriteWidth: 48, spriteHeight: 32, isDesk: true, category: "desks", backgroundTiles: 1),

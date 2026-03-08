@@ -93,7 +93,10 @@ enum FurnitureRenderer {
             let node = SKSpriteNode(texture: texture, size: CGSize(width: spriteW, height: spriteH))
             node.anchorPoint = CGPoint(x: 0, y: 0)
             let bottomY = CGFloat(totalRows - item.row) * tileSize - spriteH
-            node.position = CGPoint(x: CGFloat(item.col) * tileSize, y: bottomY)
+            let xAdjust = item.type == "ASSET_51" ? -8.5 : 0
+            let bottomYAdjust: CGFloat = item.type == "ASSET_51" ? 6.5 : 0
+            
+            node.position = CGPoint(x: CGFloat(item.col) * tileSize + xAdjust, y: bottomY + bottomYAdjust)
             node.zPosition = zY
 
             instances.append(FurnitureInstance(node: node, zY: zY))
