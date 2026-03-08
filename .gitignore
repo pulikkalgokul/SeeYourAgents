@@ -1,0 +1,9 @@
+# Xcode
+*.xcuserstate
+xcuserdata/
+
+# Tooling scripts (not part of the app)
+extractArts/
+
+# macOS
+.DS_Store

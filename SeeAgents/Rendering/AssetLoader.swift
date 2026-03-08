@@ -20,48 +20,70 @@ final class AssetLoader {
 
     private init() {}
 
-    private var atlasSheetImages: [String: CGImage] = [:]
-
     func loadAllAssets() {
         guard !isLoaded else { return }
-        loadAtlasManifest()
         loadWallSprites()
-        loadFloorSprites()
-        loadFurnitureSprites()
-        atlasSheetImages.removeAll()
+        loadSpriteMappedAssets()
         isLoaded = true
         print("[AssetLoader] Assets loaded: \(wallTextures.count) walls, \(floorTextures.count) floors, \(furnitureTextures.count) furniture")
     }
 
-    // MARK: - Atlas
+    // MARK: - Sprite Mapping (individual PNGs)
 
-    private var atlasManifest: SpriteAtlasManifest?
-
-    private func loadAtlasManifest() {
-        guard let url = Bundle.main.url(forResource: "lrk-sprite-atlas", withExtension: "json"),
+    private func loadSpriteMappedAssets() {
+        guard let url = Bundle.main.url(forResource: "sprite-mapping", withExtension: "json"),
               let data = try? Data(contentsOf: url),
-              let manifest = try? JSONDecoder().decode(SpriteAtlasManifest.self, from: data) else {
-            print("[AssetLoader] lrk-sprite-atlas.json not found")
+              let mapping = try? JSONDecoder().decode(SpriteMapping.self, from: data) else {
+            print("[AssetLoader] sprite-mapping.json not found, falling back")
+            loadFloorFallback()
             return
         }
-        atlasManifest = manifest
 
-        for (key, sheetDef) in manifest.sheets {
-            if let sheetURL = Bundle.main.url(forResource: sheetDef.file, withExtension: "png"),
-               let nsImage = NSImage(contentsOf: sheetURL),
-               let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) {
-                atlasSheetImages[key] = cgImage
-            } else {
-                print("[AssetLoader] Sheet not found: \(sheetDef.file).png")
-            }
-        }
-        print("[AssetLoader] Atlas loaded: \(atlasSheetImages.count) sheets")
+        loadFloorSprites(from: mapping)
+        loadFurnitureSprites(from: mapping)
     }
 
-    private func cropSprite(region: SpriteRegion) -> CGImage? {
-        guard let sheet = atlasSheetImages[region.sheet] else { return nil }
-        let rect = CGRect(x: region.x, y: region.y, width: region.w, height: region.h)
-        return sheet.cropping(to: rect)
+    // MARK: - Floor sprites
+
+    private func loadFloorSprites(from mapping: SpriteMapping) {
+        for filename in mapping.floors {
+            if let cgImage = loadSpriteImage(named: filename) {
+                floorImages.append(cgImage)
+                let texture = SKTexture(cgImage: cgImage)
+                texture.filteringMode = .nearest
+                floorTextures.append(texture)
+            }
+        }
+
+        if floorImages.isEmpty {
+            loadFloorFallback()
+        }
+    }
+
+    private func loadFloorFallback() {
+        if let grayImage = createSolidColorImage(
+            width: Int(OfficeConstants.tileSize),
+            height: Int(OfficeConstants.tileSize),
+            color: NSColor(white: OfficeConstants.fallbackFloorGray, alpha: 1)
+        ) {
+            floorImages.append(grayImage)
+            let texture = SKTexture(cgImage: grayImage)
+            texture.filteringMode = .nearest
+            floorTextures.append(texture)
+        }
+    }
+
+    // MARK: - Furniture sprites
+
+    private func loadFurnitureSprites(from mapping: SpriteMapping) {
+        for (assetID, filename) in mapping.assets {
+            if let cgImage = loadSpriteImage(named: filename) {
+                furnitureImages[assetID] = cgImage
+                let texture = SKTexture(cgImage: cgImage)
+                texture.filteringMode = .nearest
+                furnitureTextures[assetID] = texture
+            }
+        }
     }
 
     // MARK: - Wall sprites
@@ -92,91 +114,16 @@ final class AssetLoader {
         }
     }
 
-    // MARK: - Floor sprites
-
-    private func loadFloorSprites() {
-        // Try atlas floors first
-        if let manifest = atlasManifest {
-            for region in manifest.floors {
-                if let cropped = cropSprite(region: region) {
-                    floorImages.append(cropped)
-                    let texture = SKTexture(cgImage: cropped)
-                    texture.filteringMode = .nearest
-                    floorTextures.append(texture)
-                }
-            }
-        }
-
-        // Fallback: try floors.png
-        if floorImages.isEmpty,
-           let url = Bundle.main.url(forResource: "floors", withExtension: "png"),
-           let nsImage = NSImage(contentsOf: url),
-           let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) {
-            let tileSize = Int(OfficeConstants.tileSize)
-            let count = cgImage.width / tileSize
-
-            for i in 0..<count {
-                let rect = CGRect(x: i * tileSize, y: 0, width: tileSize, height: tileSize)
-                if let cropped = cgImage.cropping(to: rect) {
-                    floorImages.append(cropped)
-                    let texture = SKTexture(cgImage: cropped)
-                    texture.filteringMode = .nearest
-                    floorTextures.append(texture)
-                }
-            }
-        }
-
-        // Fallback: generate solid gray tiles
-        if floorImages.isEmpty {
-            if let grayImage = createSolidColorImage(
-                width: Int(OfficeConstants.tileSize),
-                height: Int(OfficeConstants.tileSize),
-                color: NSColor(white: OfficeConstants.fallbackFloorGray, alpha: 1)
-            ) {
-                floorImages.append(grayImage)
-                let texture = SKTexture(cgImage: grayImage)
-                texture.filteringMode = .nearest
-                floorTextures.append(texture)
-            }
-        }
-    }
-
-    // MARK: - Furniture sprites
-
-    private func loadFurnitureSprites() {
-        // Load from atlas manifest
-        if let manifest = atlasManifest {
-            for (assetID, spriteName) in manifest.assetMapping {
-                guard let region = manifest.sprites[spriteName],
-                      let cropped = cropSprite(region: region) else { continue }
-                furnitureImages[assetID] = cropped
-                let texture = SKTexture(cgImage: cropped)
-                texture.filteringMode = .nearest
-                furnitureTextures[assetID] = texture
-            }
-        }
-
-        // Load individual PNGs for any remaining items (from furniture-catalog.json)
-        guard let url = Bundle.main.url(forResource: "furniture-catalog", withExtension: "json"),
-              let data = try? Data(contentsOf: url),
-              let catalog = try? JSONDecoder().decode([FurnitureCatalogJSON].self, from: data) else {
-            return
-        }
-
-        for item in catalog {
-            guard furnitureTextures[item.id] == nil else { continue }
-            if let pngURL = Bundle.main.url(forResource: item.id, withExtension: "png"),
-               let nsImage = NSImage(contentsOf: pngURL),
-               let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) {
-                furnitureImages[item.id] = cgImage
-                let texture = SKTexture(cgImage: cgImage)
-                texture.filteringMode = .nearest
-                furnitureTextures[item.id] = texture
-            }
-        }
-    }
-
     // MARK: - Helpers
+
+    private func loadSpriteImage(named filename: String) -> CGImage? {
+        guard let url = Bundle.main.url(forResource: filename, withExtension: "png"),
+              let nsImage = NSImage(contentsOf: url),
+              let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            return nil
+        }
+        return cgImage
+    }
 
     func floorImage(forPattern index: Int) -> CGImage? {
         let idx = index - 1

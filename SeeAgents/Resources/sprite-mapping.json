@@ -1,0 +1,95 @@
+{
+    "assets": {
+        "ASSET_17": "cabinets_LRK_001",
+        "ASSET_18": "cabinets_LRK_000",
+        "ASSET_23": "cabinets_LRK_046",
+        "ASSET_24": "cabinets_LRK_047",
+        "ASSET_28": "cabinets_LRK_048",
+        "ASSET_29": "cabinets_LRK_060",
+        "ASSET_27_B_A_A": "cabinets_LRK_002",
+        "ASSET_27_B_A_B_A": "cabinets_LRK_025",
+        "ASSET_27_B_A_B_B_A": "cabinets_LRK_004",
+        "ASSET_27_B_A_B_B_B_A": "cabinets_LRK_027",
+        "ASSET_139": "cabinets_LRK_003",
+        "ASSET_123": "cabinets_LRK_007",
+        "ASSET_7": "cabinets_LRK_010",
+        "ASSET_4": "cabinets_LRK_005",
+        "ASSET_15": "cabinets_LRK_011",
+        "ASSET_126": "cabinets_LRK_008",
+        "ASSET_138": "cabinets_LRK_009",
+        "ASSET_135": "cabinets_LRK_006",
+
+        "ASSET_NEW_106": "livingroom_LRK_038",
+        "ASSET_NEW_107": "livingroom_LRK_039",
+        "ASSET_NEW_112": "livingroom_LRK_042",
+        "ASSET_27_A": "livingroom_LRK_024",
+        "ASSET_46": "livingroom_LRK_031",
+        "ASSET_50_0_0": "livingroom_LRK_040",
+
+        "ASSET_33": "livingroom_LRK_025",
+        "ASSET_34": "livingroom_LRK_026",
+        "ASSET_32": "livingroom_LRK_027",
+        "ASSET_38": "livingroom_LRK_028",
+
+        "ASSET_36": "livingroom_LRK_032",
+        "ASSET_37": "livingroom_LRK_033",
+        "ASSET_35": "livingroom_LRK_034",
+        "ASSET_39": "livingroom_LRK_035",
+
+        "ASSET_49": "livingroom_LRK_041",
+
+        "ASSET_NEW_110": "livingroom_LRK_000",
+        "ASSET_NEW_111": "livingroom_LRK_001",
+        "ASSET_NEW_108": "livingroom_LRK_010",
+        "ASSET_NEW_109": "livingroom_LRK_011",
+
+        "ASSET_145": "livingroom_LRK_066",
+        "ASSET_148": "livingroom_LRK_068",
+        "ASSET_150": "livingroom_LRK_067",
+
+        "ASSET_41_0_1": "kitchen_LRK_002",
+        "ASSET_40": "kitchen_LRK_014",
+        "ASSET_42": "kitchen_LRK_005",
+        "ASSET_55": "kitchen_LRK_006",
+        "ASSET_151": "kitchen_LRK_007",
+
+        "ASSET_142": "decorations_LRK_007",
+        "ASSET_143": "decorations_LRK_008",
+        "ASSET_140": "decorations_LRK_009",
+        "ASSET_141": "decorations_LRK_007",
+        "ASSET_132": "decorations_LRK_008",
+        "ASSET_133_0_0": "decorations_LRK_009",
+
+        "ASSET_83": "decorations_LRK_014",
+        "ASSET_84": "decorations_LRK_000",
+        "ASSET_61": "decorations_LRK_003",
+
+        "ASSET_101": "decorations_LRK_005",
+        "ASSET_102": "decorations_LRK_010",
+        "ASSET_103": "decorations_LRK_006",
+        "ASSET_104": "decorations_LRK_006",
+        "ASSET_105": "decorations_LRK_006",
+        "ASSET_106": "decorations_LRK_006",
+
+        "ASSET_44": "decorations_LRK_011",
+        "ASSET_51": "decorations_LRK_012",
+        "ASSET_71": "decorations_LRK_013",
+        "ASSET_72": "decorations_LRK_013",
+        "ASSET_127": "decorations_LRK_015",
+
+        "ASSET_118": "livingroom_LRK_075",
+        "ASSET_119": "livingroom_LRK_080",
+        "ASSET_120": "livingroom_LRK_062",
+        "ASSET_122": "livingroom_LRK_060",
+        "ASSET_134": "livingroom_LRK_073"
+    },
+    "floors": [
+        "floor_tile_000",
+        "floor_tile_001",
+        "floor_tile_002",
+        "floor_tile_003",
+        "floor_tile_004",
+        "floor_tile_005",
+        "floor_tile_006"
+    ]
+}

@@ -75,6 +75,10 @@ enum FurnitureRenderer {
                     texture = furnitureTexture
                 }
             } else {
+                // Missing tabletop props are less disruptive when hidden than as solid debug blocks.
+                if entry.canPlaceOnSurfaces {
+                    continue
+                }
                 // Fallback: colored rectangle placeholder
                 let placeholderColor = placeholderColor(for: entry.category)
                 let node = SKSpriteNode(color: placeholderColor, size: CGSize(width: spriteW, height: spriteH))
