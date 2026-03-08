@@ -207,12 +207,27 @@ final class OfficeScene: SKScene {
         cameraNode.setScale(1 / currentZoom)
     }
 
+    @discardableResult
+    func handleScroll(delta: CGFloat) -> Bool {
+        guard abs(delta) > .ulpOfOne else { return false }
+        let zoomStep = delta * 0.08
+        applyZoom(currentZoom + zoomStep)
+        return true
+    }
+
+    func handleMagnification(_ magnification: CGFloat) {
+        let factor = 1 + magnification
+        guard factor > 0 else { return }
+        applyZoom(currentZoom * factor)
+    }
+
     override func scrollWheel(with event: NSEvent) {
-        let delta = event.deltaY
-        if abs(delta) > 0.1 {
-            let step: CGFloat = delta > 0 ? 1 : -1
-            applyZoom(currentZoom + step)
-        }
+        let delta = event.hasPreciseScrollingDeltas ? event.scrollingDeltaY : event.deltaY
+        _ = handleScroll(delta: delta)
+    }
+
+    override func magnify(with event: NSEvent) {
+        handleMagnification(event.magnification)
     }
 
     // MARK: - Pan (uses window coordinates to avoid scene-coordinate drift)
