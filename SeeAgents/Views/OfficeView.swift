@@ -12,10 +12,7 @@ struct OfficeView: NSViewRepresentable {
         skView.ignoresSiblingOrder = false
         skView.presentScene(scene)
 
-        // Connect agent manager after scene is presented (didMove will have fired)
-        DispatchQueue.main.async {
-            scene.connectAgentManager(agentManager)
-        }
+        scene.connectAgentManager(agentManager)
 
         return skView
     }
