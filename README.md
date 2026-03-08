@@ -2,10 +2,12 @@
 
 SeeAgents is a macOS app that detects your running [Claude Code](https://claude.ai/code) sessions and visualizes them as live, animated agents working in a virtual office.
 
+This project is inpsired from  Pixel Agents extension for VS Code [link](https://github.com/pablodelucca/pixel-agents)
+
 ## Demo
 
 <!-- Add screen recording here -->
-https://github.com/user-attachments/assets/YOUR-SCREEN-RECORDING-ID
+https://github.com/user-attachments/assets/3579bc14-ebd9-4b40-8d35-d385262bca67
 
 > *Replace the placeholder above with your screen recording once uploaded to GitHub.*
 
