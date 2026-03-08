@@ -75,6 +75,8 @@ final class AgentManager {
             guard let self, let agent = self.agents[id] else { return }
 
             agent.lastDataReceived = Date()
+            agent.fileOffset = result.fileOffset
+            agent.lineBuffer = result.lineBuffer
 
             self.timerManager.cancelWaitingTimer(for: agent.id)
             self.timerManager.cancelPermissionTimer(for: agent.id)

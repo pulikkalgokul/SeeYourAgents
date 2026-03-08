@@ -1,4 +1,7 @@
 import Foundation
+import os
+
+private let logger = Logger(subsystem: "com.personal.SeeAgents", category: "AgentWatcher")
 
 /// Watches a single JSONL file for new lines using DispatchSource (kqueue) + polling fallback.
 /// Ported from pixel-agents `fileWatcher.ts` — `startFileWatching()` + `readNewLines()`.
@@ -10,6 +13,7 @@ final class AgentWatcher: @unchecked Sendable {
     private let agentId: Int
     private let jsonlFile: String
     private let onNewLines: @MainActor @Sendable (FileReadResult) -> Void
+    private let watchQueue: DispatchQueue
 
     private var dispatchSource: DispatchSourceFileSystemObject?
     private var fileDescriptor: Int32 = -1
@@ -22,6 +26,8 @@ final class AgentWatcher: @unchecked Sendable {
 
     struct FileReadResult: Sendable {
         let lines: [String]
+        let fileOffset: UInt64
+        let lineBuffer: String
     }
 
     init(
@@ -33,19 +39,24 @@ final class AgentWatcher: @unchecked Sendable {
         self.fileOffset = agent.fileOffset
         self.lineBuffer = agent.lineBuffer
         self.onNewLines = onNewLines
+        self.watchQueue = DispatchQueue(label: "com.personal.SeeAgents.AgentWatcher.\(agent.id)", qos: .utility)
     }
 
     // MARK: - Start / Stop
 
     func start() {
         guard !isStopped else { return }
+        logger.debug("Starting watcher for agent \(self.agentId, privacy: .public)")
         startDispatchSource()
         startPollingTimer()
-        readNewLines()
+        watchQueue.async { [weak self] in
+            self?.readNewLines()
+        }
     }
 
     func stop() {
         isStopped = true
+        logger.debug("Stopping watcher for agent \(self.agentId, privacy: .public)")
 
         dispatchSource?.cancel()
         dispatchSource = nil
@@ -58,13 +69,16 @@ final class AgentWatcher: @unchecked Sendable {
 
     private func startDispatchSource() {
         let fd = open(jsonlFile, O_RDONLY | O_EVTONLY)
-        guard fd >= 0 else { return }
+        guard fd >= 0 else {
+            logger.debug("kqueue open failed for agent \(self.agentId, privacy: .public), file \(self.jsonlFile, privacy: .public)")
+            return
+        }
         fileDescriptor = fd
 
         let source = DispatchSource.makeFileSystemObjectSource(
             fileDescriptor: fd,
             eventMask: [.write, .extend],
-            queue: .global(qos: .utility)
+            queue: watchQueue
         )
 
         source.setEventHandler { [weak self] in
@@ -82,7 +96,7 @@ final class AgentWatcher: @unchecked Sendable {
     // MARK: - Polling Fallback
 
     private func startPollingTimer() {
-        let timer = DispatchSource.makeTimerSource(queue: .global(qos: .utility))
+        let timer = DispatchSource.makeTimerSource(queue: watchQueue)
         timer.schedule(
             deadline: .now() + GameConstants.fileWatcherPollInterval,
             repeating: GameConstants.fileWatcherPollInterval
@@ -113,7 +127,8 @@ final class AgentWatcher: @unchecked Sendable {
         defer { handle.closeFile() }
 
         handle.seek(toFileOffset: fileOffset)
-        let newData = handle.readData(ofLength: Int(fileSize - fileOffset))
+        let bytesToRead = Int(min(fileSize - fileOffset, UInt64(Int.max)))
+        let newData = handle.readData(ofLength: bytesToRead)
         guard !newData.isEmpty else { return }
 
         fileOffset += UInt64(newData.count)
@@ -124,11 +139,15 @@ final class AgentWatcher: @unchecked Sendable {
         var splitLines = combined.components(separatedBy: "\n")
         lineBuffer = splitLines.removeLast()
 
-        let completeLines = splitLines.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        let completeLines = splitLines.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
         guard !completeLines.isEmpty else { return }
 
-        let result = FileReadResult(lines: completeLines)
+        let result = FileReadResult(
+            lines: completeLines,
+            fileOffset: fileOffset,
+            lineBuffer: lineBuffer
+        )
         let callback = onNewLines
         DispatchQueue.main.async {
             callback(result)

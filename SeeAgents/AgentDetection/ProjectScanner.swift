@@ -17,6 +17,8 @@ final class ProjectScanner: @unchecked Sendable {
     private let onSessionFound: @MainActor @Sendable (String, String) -> Void  // (projectDir, jsonlPath)
     private let onSessionLost: @MainActor @Sendable (String) -> Void           // jsonlPath of dead session
     private var reportedFiles: Set<String> = []
+    private var knownJsonlFiles: Set<String> = []
+    private var scannerStartDate: Date = .distantPast
     private var scanTimer: DispatchSourceTimer?
     private var isRunning = false
 
@@ -33,6 +35,7 @@ final class ProjectScanner: @unchecked Sendable {
     func start() {
         guard !isRunning else { return }
         isRunning = true
+        scannerStartDate = Date()
 
         let timer = DispatchSource.makeTimerSource(queue: .global(qos: .utility))
         timer.schedule(
@@ -50,6 +53,7 @@ final class ProjectScanner: @unchecked Sendable {
         isRunning = false
         scanTimer?.cancel()
         scanTimer = nil
+        knownJsonlFiles.removeAll()
     }
 
     func markReported(_ path: String) {
@@ -61,7 +65,6 @@ final class ProjectScanner: @unchecked Sendable {
     private func scan() {
         // Step 1: Find all running claude processes and their project dirs
         let processes = findClaudeProcesses()
-        let activeProjectDirs = Set(processes.map(\.projectDir))
         // Step 2: For each active project dir, find N most recent JSONL files
         // where N = number of claude processes in that directory
         let fm = FileManager.default
@@ -77,13 +80,16 @@ final class ProjectScanner: @unchecked Sendable {
             guard fm.fileExists(atPath: projectDir) else { continue }
             guard let files = try? fm.contentsOfDirectory(atPath: projectDir) else { continue }
 
-            // Collect all JSONL files with their modification dates
-            var jsonlFiles: [(path: String, date: Date)] = []
+            // Collect all JSONL files with their modification dates.
+            // Track whether each file was already known before this scan.
+            var jsonlFiles: [(path: String, date: Date, wasKnown: Bool)] = []
             for file in files where file.hasSuffix(".jsonl") {
                 let fullPath = "\(projectDir)/\(file)"
                 if let attrs = try? fm.attributesOfItem(atPath: fullPath),
                    let modDate = attrs[.modificationDate] as? Date {
-                    jsonlFiles.append((fullPath, modDate))
+                    let wasKnown = knownJsonlFiles.contains(fullPath)
+                    jsonlFiles.append((fullPath, modDate, wasKnown))
+                    knownJsonlFiles.insert(fullPath)
                 }
             }
 
@@ -91,10 +97,15 @@ final class ProjectScanner: @unchecked Sendable {
             jsonlFiles.sort { $0.date > $1.date }
             let topFiles = jsonlFiles.prefix(count)
 
-            for (jsonlPath, _) in topFiles {
+            for (jsonlPath, modDate, wasKnown) in topFiles {
                 activeJsonlFiles.insert(jsonlPath)
 
-                if !reportedFiles.contains(jsonlPath) {
+                // Pixel-agent-like behavior:
+                // - Ignore baseline files that already existed when app started.
+                // - Only report JSONL files first seen after scanner start.
+                if !wasKnown,
+                   modDate >= scannerStartDate,
+                   !reportedFiles.contains(jsonlPath) {
                     reportedFiles.insert(jsonlPath)
                     logger.info("Found active session: \(jsonlPath)")
 
