@@ -195,7 +195,7 @@ final class ProjectScanner: @unchecked Sendable {
 
     /// Convert a working directory path to Claude Code's project hash format.
     /// Mirrors: `workspacePath.replace(/[^a-zA-Z0-9-]/g, '-')`
-    /// e.g. `/Users/g.pulikkal/Desktop/MyProject` → `-Users-g-pulikkal-Desktop-MyProject`
+    /// e.g. `/Users/you/Desktop/MyProject` → `-Users-you-Desktop-MyProject`
     private func cwdToProjectHash(_ cwd: String) -> String {
         String(cwd.map { c in
             c.isLetter || c.isNumber || c == "-" ? c : Character("-")

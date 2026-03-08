@@ -2,6 +2,9 @@
 *.xcuserstate
 xcuserdata/
 
+# Local agent/tool settings
+.claude/settings.local.json
+
 # Tooling scripts (not part of the app)
 extractArts/
 
